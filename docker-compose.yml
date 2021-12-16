@@ -1,0 +1,57 @@
+version: '3'
+
+volumes:
+  my-db : {}
+networks:
+  my_network: {}
+
+services:
+  database:
+    image: mysql:latest
+    container_name: database
+    environment:
+      - MYSQL_DATABASE=markets
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=password
+      - MYSQL_ROOT_PASSWORD=password
+    ports:
+      - 3306:3306
+    volumes:
+      - my-db:/var/lib/mysql
+      - ./DATA/SQL:/docker-entrypoint-initdb.d/
+    networks:
+      - my_network
+
+  react:
+    container_name: react
+    build:
+      context: ./FRONT
+      dockerfile: Dockerfile
+    ports:
+      - 80:80
+    expose:
+      - 80
+    depends_on:
+      - api
+    networks:
+      - my_network
+
+  api:
+    container_name: api
+    environment:
+      - DATABASE_USERNAME=user
+      - DATABASE_PASSWORD=password
+      - DATABASE_URL=password
+      - DATABASE_URL=192.168.1.30
+      - PORT=3000
+    build:
+      context: ./API/markets
+      dockerfile: ./Dockerfile
+    ports:
+      - 3000:3000
+    expose:
+      - 3000
+    depends_on:
+      - database
+    networks:
+      - my_network
